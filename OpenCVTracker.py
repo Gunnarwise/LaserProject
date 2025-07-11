@@ -1,60 +1,17 @@
 import cv2
 import numpy as np
+from Color_tracker import find_given_color
+from Yolo_tracker import detect_objects
 
 ## VARIABLES ##
 color_to_track = "blue" # set default tracking color
-modes = ["default", "targeting", "smooth targeting"]
+modes = ["default", "targeting", "smooth targeting", "YOLO"]
 mode_index = 0
 mode = modes[mode_index]
 
 
 smoothed_cx, smoothed_cy = None, None
 smoothing_factor = 0.2
-
-
-# input the hsv and color you want to track, itll return the mask
-def find_given_color(hsv, color: str):
-
-    match color.lower():
-        case "red":
-            lower1 = np.array([0, 100, 100])
-            upper1 = np.array([10, 255, 255])
-            lower2 = np.array([160, 100, 100])
-            upper2 = np.array([179, 255, 255])
-            mask1 = cv2.inRange(hsv, lower1, upper1)
-            mask2 = cv2.inRange(hsv, lower2, upper2)
-            return mask1 | mask2
-
-        case "blue":
-            lower = np.array([100, 150, 50])
-            upper = np.array([130, 255, 255])
-            return cv2.inRange(hsv, lower, upper)
-
-        case "green":
-            lower = np.array([40, 70, 70])
-            upper = np.array([80, 255, 255])
-            return cv2.inRange(hsv, lower, upper)
-
-        case "yellow":
-            lower = np.array([20, 100, 100])
-            upper = np.array([30, 255, 255])
-            return cv2.inRange(hsv, lower, upper)
-
-        case "purple":
-            lower = np.array([130, 100, 100])
-            upper = np.array([155, 255, 255])
-            return cv2.inRange(hsv, lower, upper)
-
-        case "orange":
-            lower = np.array([10, 150, 100])
-            upper = np.array([25, 255, 255])
-            return cv2.inRange(hsv, lower, upper)
-
-        case _:
-            raise ValueError(f"Unsupported color: {color}")
-
-
-
 
 
 
@@ -79,7 +36,7 @@ while True:
 
 
 
-    # use function to detect given color
+    # use my function to detect given color
     mask = find_given_color(hsv, color_to_track)
     # erode and dilate to clean up noise
     mask = cv2.erode(mask, None, iterations=2)
@@ -164,6 +121,25 @@ while True:
                 cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
                 cv2.putText(frame, f"({cx},{cy})", (cx + 10, cy - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+
+
+    elif mode == "YOLO":
+        detections = detect_objects(frame, target_classes=["person", "sports ball"])
+
+        for det in detections:
+            x1, y1, x2, y2 = det["bbox"]
+            label = det["label"]
+            conf = det["confidence"]
+            cx, cy = det["center"]
+
+            # Draw bounding box
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, f"{label} {conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 3)
+
+            # Optionally: draw crosshair
+            cv2.drawMarker(frame, (cx, cy), (255, 255, 0), markerType=cv2.MARKER_CROSS, thickness=2)
+
 
 
     # show color and mode
