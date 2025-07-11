@@ -7,3 +7,6 @@ to accurately and speedily aim at the object, then turn the laser on.
 <br>
 <h2>Package Installs</h2>
 <code>pip install opencv-python numpy</code>
+<br>
+<code>pip install ultralytics</code>
+
